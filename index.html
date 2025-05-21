@@ -1,0 +1,507 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <link rel="icon" type="image/svg+xml" href="/vite.svg" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>DocDiffer</title>
+    <style>
+      @import url('https://fonts.googleapis.com/css2?family=Courgette&display=swap');
+      @import url('https://fonts.googleapis.com/css2?family=Catamaran:wght@100..900&family=Courgette&family=IBM+Plex+Sans:ital,wdth,wght@0,75..100,100..700;1,75..100,100..700&display=swap');
+      /* common globals */
+      :root {
+        /* defaults for delete & insert tags */
+        --del-fg-color: hsl(345, 70%, 35%);
+        --ins-fg-color: hsl(165, 70%, 23%);
+        --del-bg-color: hsl(345, 90%, 91%);
+        --ins-bg-color: hsl(165, 68%, 78%);
+        --del-ins-border-radius: 5px;
+        --del-ins-transform: skewX(-8deg);
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        font-family: "IBM Plex Sans", sans-serif;
+        font-optical-sizing: auto;
+        font-style: normal;
+        outline: none;
+      }
+      #root {
+        display: none; /* initially hidden. Activate later */
+        /* width: 100%; */
+        width:calc(100% - 120px);
+        min-height: 200px;
+        margin: 0 auto;
+        padding: 0.5rem 3.5rem;
+        padding-bottom: 50px;
+        max-width: 1240px;
+      }
+      /* Hide a focus ring rectangle which appear due to radio group. */
+      /* It's suboptimal, but works due to ckeditor use own classes for focus. */
+      #root *:focus-visible {
+        outline: none;
+      }
+      #main-title {
+        position: relative;
+        text-align: center;
+        font-size: 2.3rem;
+        font-family: "Courgette", sans-serif;
+        font-weight: 400;
+        font-style: normal;
+      }
+      #main-title sup {
+        color: #a6b6c3;
+        position: absolute;
+        font-size: 1.2rem;
+        padding-left: 0.4rem;
+        vertical-align: top;
+        top: 0.1rem;
+      }
+      /* helper area for observer */
+      #sentinel {
+        position: relative;
+        top: 0px;
+        height: 1px;
+        width: 100%;
+      }
+      #toolbar {
+        margin: 0.2rem 0;
+        position: sticky;
+        top: 0px;
+        z-index: 10;
+      }
+      #toolbar::after {
+        content: "";
+        position: absolute;
+        left: 0;
+        right: 0;
+        height: 60px;
+        opacity: 0;
+        /* emulate exponential falloff via multi-stop linear gradient */
+        background: linear-gradient(
+          to bottom,
+          rgba(0 79 125 / 0.065) 0%,
+          rgba(6 79 121 / 0.035) 22%,
+          rgba(24 86 122 / 0.015) 48%,
+          rgba(67 84 102 / 0.008) 78%,
+          rgba(246 249 251 / 0) 100%
+        );
+        transition: opacity 0.3s ease-out;
+        pointer-events: none;
+        z-index: -1;
+      }
+      #toolbar.stuck::after {
+        opacity: 1;
+      }
+      .editor-wrapper {
+        display: flex;
+        gap: 0.6rem;
+      }
+      .editor {
+        width: 100%;
+        min-height: 200px;
+        padding: 10px;
+        background: #f8fafc;
+      }
+      .editor .ck-editor__editable {
+        height: 100%;
+      }
+      /* scrol to top button */
+      #scroll-to-top {
+        display: none;
+        position: fixed;
+        bottom: 3rem;
+        right: 3rem;
+        width: 4.2rem;
+        height: 4.2rem;
+        z-index: 10;
+        padding: 18px;
+        padding-top: 24px;
+        border-radius: 50%;
+        background-color: #e5ebf0;
+        color: black;
+        border: none;
+        font-size: 2rem;
+        cursor: pointer;
+      }
+      #scroll-to-top:hover {
+        border: 1px solid #0048FF;
+      }
+      #scroll-to-top:active {
+        border: none;
+        background-color: white;
+      }
+      #sidebar {
+        position: sticky;
+        display: flex;
+        align-self: flex-start;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        gap: 2rem;
+        top: 52px;
+        margin-left: -53px;
+        user-select: none;
+      }
+      #sidebar button, .toggle-button {
+        all: unset;
+        width: 1.1em;
+        height: 1.1em;
+        padding: 0.8rem;
+        border-radius: 50%;
+        background-color: #e9edf0;
+        transition: color,background-color 0.15s ease-out;
+        user-select: none;
+        cursor: pointer;
+      }
+      #sidebar button:hover {
+        background-color: #e5eaec;
+      }
+      #sidebar #switch-buttons {
+        display: none;
+        flex-direction: column;
+        align-self: flex-start;
+        gap: 0.6rem;
+      }
+      /* style button *after* checked input */
+      #sidebar input[type="radio"]:checked + button,
+      #sidebar input[type="checkbox"]:checked + .toggle-button {
+        background-color: #000;
+        color: #fff;
+      }
+      #sidebar input[type="radio"]:checked + button svg,
+      #sidebar input[type="checkbox"]:checked + .toggle-button svg {
+        stroke-width: 2.5;
+      }
+      .icon-off {
+        display: block;
+      }
+      .icon-on {
+        display: none;
+      }
+      #sidebar input[type="checkbox"]:checked + .toggle-button .icon-off {
+        display: none;
+      }
+      #sidebar input[type="checkbox"]:checked + .toggle-button .icon-on {
+        display: block;
+      }
+      /* style delete and insert tags for diff view */
+      .ck-content s,
+      .ck-content ins {
+        position: relative;
+        display: inline-block;
+        padding: 0.15em 0.25em;
+        margin: -0.15em 0;
+        text-decoration: none;
+        z-index: 0;
+      }
+      .ck-content s {
+        color: var(--del-fg-color);
+      }
+      .ck-content ins {
+        color: var(--ins-fg-color);
+      }
+      .ck-content s::before,
+      .ck-content ins::before {
+        content: "";
+        position: absolute;
+        inset: 0;
+        z-index: -1;
+        transform: var(--del-ins-transform);
+        border-radius: var(--del-ins-border-radius);
+      }
+      /* #orig-view {
+        background-color: #8be0ff;
+      }
+
+      #modif-view {
+        background-color: #8bffb9;
+      }
+
+      #diff-view {
+        background-color: #f0ff8b;
+      } */
+      .ck-content s::before {
+        background: var(--del-bg-color);
+      }
+      .ck-content ins::before {
+        background: var(--ins-bg-color);
+      }
+      /* adjust border radiuses for <s>(del) and <ins> if they are joined as pair */
+      .ck-content s + ins::before {
+        border-top-left-radius: 0;
+        border-bottom-left-radius: 0;
+      }
+      .ck-content ins + s::before {
+        border-top-right-radius: 0;
+        border-bottom-right-radius: 0;
+      }
+      /* adjust styles of ordered list markers for h1-h4 headers */
+      .ck-content li:has(> h1)::marker {
+        font-size:   2em;
+        font-weight: 700;
+      }
+      .ck-content li:has(> h2)::marker {
+        font-size:   1.5em;
+        font-weight: 700;
+      }
+      .ck-content li:has(> h3)::marker {
+        font-size:   1.17em;
+        font-weight: 600;
+      }
+      .ck-content li:has(> h4)::marker {
+        font-size:   1em;
+        font-weight: 600;
+      }
+    </style>
+    <script type="module" crossorigin src="/contractuo-diff-demo/assets/index-BacBZtGt.js"></script>
+    <link rel="modulepreload" crossorigin href="/contractuo-diff-demo/assets/vendor-fxvBRTu3.js">
+    <link rel="stylesheet" crossorigin href="/contractuo-diff-demo/assets/vendor-qcbNyCq2.css">
+  </head>
+
+  <body>
+    <span id="root">
+      <!-- Title DocDiffer + Demo -->
+      <h1 id="main-title">DocDiffer<sup>Demo</sup></h1>
+      <!-- Toolbar -->
+      <div id="toolbar"></div>
+      <!-- Left & Right Views -->
+      <div contenteditable="true">
+        <div class="editor-wrapper" contenteditable="false">
+          <!-- Original / Modificated Switch Buttons -->
+          <div id="sidebar">
+
+            <!-- pin toggle button -->
+            <input type="checkbox" id="pin-orig" hidden/>
+            <label for="pin-orig" class="toggle-button" data-cke-tooltip-text="Pin/Unpin for modification" tabindex="0">
+              <!-- pin-off -->
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none"
+                stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="toggle-icon icon-off">
+                <path d="M12 17v5"/>
+                <path d="M15 9.34V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H7.89"/>
+                <path d="m2 2 20 20"/>
+                <path d="M9 9v1.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h11"/>
+              </svg>
+              <!-- pin-on -->
+              <svg
+                xmlns="http://www.w3.org/2000/svg"
+                viewBox="0 0 24 24"
+                fill="none" stroke="currentColor"
+                stroke-width="2"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                class="toggle-icon icon-on">
+                <path d="M12 17v5"/>
+                <path d="M9 10.76a2 2 0 0 1-1.11 1.79l-1.78.9A2 2 0 0 0 5 15.24V16a1 1 0 0 0 1 1h12a1 1 0 0 0 1-1v-.76a2 2 0 0 0-1.11-1.79l-1.78-.9A2 2 0 0 1 15 10.76V7a1 1 0 0 1 1-1 2 2 0 0 0 0-4H8a2 2 0 0 0 0 4 1 1 0 0 1 1 1z"/>
+              </svg>
+            </label>
+
+            <div id="switch-buttons">
+              <input type="radio" name="viewMode" id="orig" value="orig" hidden/>
+              <button type="button" data-cke-tooltip-text="Original Document" tabindex="1">
+                <!-- Original doc Icon (text) -->
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round"
+                  stroke-linejoin="round">
+                  <path d="M15 18H3"/>
+                  <path d="M17 6H3"/>
+                  <path d="M21 12H3"/>
+                </svg>
+              </button>
+
+              <input type="radio" name="viewMode" id="modif" value="modif" checked hidden/>
+              <button type="button" data-cke-tooltip-text="Modified Document" tabindex="2">
+                <!-- Modified doc Icon (pen) -->
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  stroke-width="2"
+                  stroke-linecap="round">
+                  <path d="M12 20h9"/>
+                  <path d="M16.376 3.622a1 1 0 0 1 3.002 3.002L7.368 18.635a2 2 0 0 1-.855.506l-2.872.838a.5.5 0 0 1-.62-.62l.838-2.872a2 2 0 0 1 .506-.854z"/>
+                </svg>
+              </button>
+            </div>
+          </div>
+
+          <!-- Original, Modified & Diff editor views -->
+          <div id="orig-view"  class="editor"></div>
+          <div id="modif-view" class="editor"></div>
+          <div id="diff-view"  class="editor"></div>
+
+        </div>
+      </div>
+
+      <!-- Scroll to Top Button -->
+      <button type="button" id="scroll-to-top">
+        <svg
+          xmlns="http://www.w3.org/2000/svg"
+          fill="none"
+          viewBox="0 0 24 24"
+          stroke-width="1.5"
+          stroke="currentColor">
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            d="M4.5 10.5 12 3m0 0 7.5 7.5"
+          />
+        </svg>
+      </button>
+
+    </div>
+
+
+    <style>
+      /* overrides editor's theme. */
+      :root {
+        --ck-border-radius: 0px;
+        --ck-focus-outer-shadow: none;
+        --ck-color-focus-outer-shadow: #000;
+
+        .ck-toolbar {
+          min-height: 52px;
+          border: none;
+        }
+
+        /* remove focus ring from toolbar */
+        .ck-toolbar.ck-focused {
+          box-shadow: none;
+          outline: none;
+        }
+
+        /* remove separator between split buttons when group is hover */
+        .ck-splitbutton .ck-splitbutton__arrow::after {
+          display: none;
+        }
+
+        /* add padding for inner editable area */
+        .ck-content.ck-editor__editable {
+          padding: 0 1.8rem;
+          line-height: calc(1em + 0.4em)
+        }
+
+        /* make sure caret is not visible */
+        .ck-content.ck-editor__editable[contenteditable="false"] {
+          caret-color: transparent;
+
+          background-size: 8px 8px;
+          background-image: repeating-linear-gradient(
+            45deg,
+            #dfe8f0 0,
+            #dfe8f0 0.8px,
+            #ffffff 0,
+            #ffffff 50%
+          );
+        }
+
+        /* disable focus shadow for editors */
+        .ck-content.ck-editor__editable.ck-focused,
+        /* disable focus shadow for switch buttons */
+        .ck-button.ck-switchbutton:focus .ck-button__toggle {
+          box-shadow: none;
+          outline: none;
+        }
+
+        /* reduce thump animation duration (default was 300ms) */
+        .ck-button.ck-switchbutton .ck-button__toggle .ck-button__toggle__inner {
+          transition-duration: 90ms;
+        }
+
+        /* redefine panel,tooltip & dialog shadows */
+        .ck-dropdown__panel,
+        .ck-balloon-panel,
+        .ck-contextual-balloon,
+        .ck-tooltip,
+        .ck-dialog,
+        .ck-editor__editable-popup {
+          box-shadow: 0 15px 46px rgba(1, 26, 62, 0.12);
+        }
+
+        /*
+          FIXME: ckeditor 5 free doesn't support customization list item format,
+          so we use hardcoded approach. For paid version see: @ckeditor/ckeditor5-list-multi-level
+          TODO: use more clever approach via custom plugin.
+        */
+        /*
+        .ck-content ol {
+          counter-reset: item;
+          list-style: none;
+          padding-left: 2.5rem;
+        }
+
+        .ck-content ol > li {
+          counter-increment: item;
+          position: relative;
+        }
+
+        .ck-content ol > li::before {
+          content: counters(item, ".") ".";
+          position: absolute;
+          text-align: right;
+          left: -2rem;
+          width: calc(2rem - 0.25rem);
+        }
+
+        .ck-content ol ol > li::before {
+          left: -2.5rem;
+          width: calc(2.5rem - 0.25rem);
+        }
+
+        .ck-content ol ol ol > li::before {
+          left: -3rem;
+          width: calc(3rem - 0.25rem);
+        }
+
+        .ck-content ol ol ol ol > li::before {
+          left: -4rem;
+          width: calc(4rem - 0.25rem);
+        }
+
+        .ck-content ol ol ol ol ol > li::before {
+          left: -5rem;
+          width: calc(5rem - 0.25rem);
+        }
+
+        .ck-content ol ol ol ol ol ol > li::before {
+          left: -6rem;
+          width: calc(6rem - 0.25rem);
+        }
+
+        .ck-content ol ol ol ol ol ol ol > li::before {
+          left: -7rem;
+          width: calc(7rem - 0.25rem);
+        }
+
+        .ck-content ol ol ol ol ol ol ol ol > li::before {
+          left: -8rem;
+          width: calc(8rem - 0.25rem);
+        }
+
+        .ck-content ol ol ol ol ol ol ol ol ol > li::before {
+          left: -9rem;
+          width: calc(9rem - 0.25rem);
+        }
+
+        .ck-content ol ol ol ol ol ol ol ol ol ol > li::before {
+          left: -10rem;
+          width: calc(10rem - 0.25rem);
+        }
+        */
+      }
+    </style>
+  </body>
+</html>
