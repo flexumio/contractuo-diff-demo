@@ -211,7 +211,7 @@
         display: block;
       }
       /* style delete and insert tags for diff view */
-      .ck-content s,
+      .ck-content del,
       .ck-content ins {
         position: relative;
         display: inline-block;
@@ -220,13 +220,13 @@
         text-decoration: none;
         z-index: 0;
       }
-      .ck-content s {
+      .ck-content del {
         color: var(--del-fg-color);
       }
       .ck-content ins {
         color: var(--ins-fg-color);
       }
-      .ck-content s::before,
+      .ck-content del::before,
       .ck-content ins::before {
         content: "";
         position: absolute;
@@ -246,19 +246,19 @@
       #diff-view {
         background-color: #f0ff8b;
       } */
-      .ck-content s::before {
+      .ck-content del::before {
         background: var(--del-bg-color);
       }
       .ck-content ins::before {
         background: var(--ins-bg-color);
       }
       /* adjust border radiuses for <s>(del) and <ins> if they are joined as pair */
-      .ck-content s + ins::before {
+      .ck-content del + ins::before {
         border-top-left-radius: 0;
         border-bottom-left-radius: 0;
       }
-      .ck-content ins + s::before,
-      .ck-content s:first-child:has(+ ins)::before {
+      .ck-content ins + del::before,
+      .ck-content del:first-child:has(+ ins)::before {
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
       }
@@ -271,9 +271,9 @@
       .ck-content .differ-struct-upd,
       .ck-content .differ-struct-mov {
         position: relative;
-        /* padding-top: 0.19em; */
-        /* padding-bottom: 0.19em; */
-        /* margin: -0.02em 0; */
+        padding-top: 0.3em;
+        padding-bottom: 0.3em;
+        margin: 0em auto;
         z-index: 0;
       }
       .ck-content .differ-struct-del::before,
@@ -286,6 +286,7 @@
         left: -100vw;
         top: 0;
         bottom: 0;
+        box-decoration-break: clone;
         z-index: -2;
       }
       .ck-content .differ-struct-del::before {
@@ -311,6 +312,7 @@
         left: 0;
         top: 0;
         bottom: 0;
+        box-decoration-break: clone;
         background-size: 8px 8px;
         z-index: -1;
       }
@@ -369,8 +371,8 @@
         font-weight: 600;
       }
     </style>
-    <script type="module" crossorigin src="/contractuo-diff-demo/assets/index-vqlJn08f.js"></script>
-    <link rel="modulepreload" crossorigin href="/contractuo-diff-demo/assets/vendor-B6QJtZ1U.js">
+    <script type="module" crossorigin src="/contractuo-diff-demo/assets/index-C6e-S7fz.js"></script>
+    <link rel="modulepreload" crossorigin href="/contractuo-diff-demo/assets/vendor-BsX2DwTP.js">
     <link rel="stylesheet" crossorigin href="/contractuo-diff-demo/assets/vendor-BA2yj9PM.css">
   </head>
 
@@ -511,7 +513,6 @@
         /* add padding for inner editable area */
         .ck-content.ck-editor__editable {
           padding: 0 1.8rem;
-          line-height: calc(1em + 0.4em)
         }
 
         /* make sure caret is not visible */
