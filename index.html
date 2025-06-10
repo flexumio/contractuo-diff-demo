@@ -262,24 +262,24 @@
         border-top-right-radius: 0;
         border-bottom-right-radius: 0;
       }
-      /* highlight for structurall changes for list items */
+      /* highlight for block-based changes for list items */
       .ck-content ol li, ul li {
         padding-left: 0.4em;
       }
-      .ck-content .differ-struct-del,
-      .ck-content .differ-struct-ins,
-      .ck-content .differ-struct-upd,
-      .ck-content .differ-struct-mov {
+      .ck-content .differ-block-del,
+      .ck-content .differ-block-ins,
+      .ck-content .differ-block-upd,
+      .ck-content .differ-block-mov {
         position: relative;
         padding-top: 0.3em;
         padding-bottom: 0.3em;
         margin: 0em auto;
         z-index: 0;
       }
-      .ck-content .differ-struct-del::before,
-      .ck-content .differ-struct-ins::before,
-      .ck-content .differ-struct-upd::before,
-      .ck-content .differ-struct-mov::before {
+      .ck-content .differ-block-del::before,
+      .ck-content .differ-block-ins::before,
+      .ck-content .differ-block-upd::before,
+      .ck-content .differ-block-mov::before {
         content: '';
         position: absolute;
         width: 100vw;
@@ -289,23 +289,23 @@
         box-decoration-break: clone;
         z-index: -2;
       }
-      .ck-content .differ-struct-del::before {
+      .ck-content .differ-block-del::before {
         background-color: var(--del-bg-color);
       }
-      .ck-content .differ-struct-ins::before {
+      .ck-content .differ-block-ins::before {
         background-color: var(--ins-bg-color);
       }
-      .ck-content .differ-struct-upd::before {
+      .ck-content .differ-block-upd::before {
         background-color: var(--upd-bg-color);
       }
-      .ck-content .differ-struct-mov::before {
+      .ck-content .differ-block-mov::before {
         /* TODO: use different color? */
         background-color: var(--upd-bg-color);
       }
-      .ck-content .differ-struct-del::after,
-      .ck-content .differ-struct-ins::after,
-      .ck-content .differ-struct-upd::after,
-      .ck-content .differ-struct-mov::after {
+      .ck-content .differ-block-del::after,
+      .ck-content .differ-block-ins::after,
+      .ck-content .differ-block-upd::after,
+      .ck-content .differ-block-mov::after {
         content: '';
         position: absolute;
         width: 100vw;
@@ -316,7 +316,7 @@
         background-size: 8px 8px;
         z-index: -1;
       }
-      .ck-content .differ-struct-del::after {
+      .ck-content .differ-block-del::after {
         background-image: repeating-linear-gradient(
           -45deg,
           color-mix(in srgb, var(--del-bg-color), hsl(345, 79%, 25%) 3%) 0,
@@ -325,7 +325,7 @@
           #fff 25%
         );
       }
-      .ck-content .differ-struct-ins::after {
+      .ck-content .differ-block-ins::after {
         background-image: repeating-linear-gradient(
           -45deg,
           color-mix(in srgb, var(--ins-bg-color), hsl(165, 37%, 60%) 3%) 0,
@@ -334,7 +334,7 @@
           #fff 25%
         );
       }
-      .ck-content .differ-struct-upd::after {
+      .ck-content .differ-block-upd::after {
         background-image: repeating-linear-gradient(
           -45deg,
           color-mix(in srgb, var(--upd-bg-color), #043551 3%) 0,
@@ -343,7 +343,7 @@
           #fff 25%
         );
       }
-      .ck-content .differ-struct-mov::after {
+      .ck-content .differ-block-mov::after {
         /* TODO: use different color? */
         background-image: repeating-linear-gradient(
           -45deg,
@@ -371,9 +371,9 @@
         font-weight: 600;
       }
     </style>
-    <script type="module" crossorigin src="/contractuo-diff-demo/assets/index-C6e-S7fz.js"></script>
-    <link rel="modulepreload" crossorigin href="/contractuo-diff-demo/assets/vendor-BsX2DwTP.js">
-    <link rel="stylesheet" crossorigin href="/contractuo-diff-demo/assets/vendor-BA2yj9PM.css">
+    <script type="module" crossorigin src="/contractuo-diff-demo/assets/index-D8a-zthI.js"></script>
+    <link rel="modulepreload" crossorigin href="/contractuo-diff-demo/assets/vendor-yGB__Fj_.js">
+    <link rel="stylesheet" crossorigin href="/contractuo-diff-demo/assets/vendor-C2zQzrlW.css">
   </head>
 
   <body>
@@ -550,6 +550,153 @@
         .ck-dialog,
         .ck-editor__editable-popup {
           box-shadow: 0 15px 46px rgba(1, 26, 62, 0.12);
+        }
+
+        /* range slider styles */
+        .ck-slider-container {
+          display: flex;
+          flex-direction: column;
+          margin: 0.4em 1.3em;
+          min-width: 220px;
+          position: relative;
+        }
+
+        .ck-slider-label {
+          font-weight: 500;
+          color: var(--ck-color-text);
+          font-size: 0.9em;
+        }
+
+        .ck-slider-wrapper {
+          position: relative;
+        }
+
+        /* tooltip */
+        .ck-slider-tooltip {
+          position: absolute;
+          bottom: 5em;
+          left: 50%;
+          transform: translateX(-50%);
+          background: var(--ck-color-dropdown-background, #fff);
+          border: 1px solid var(--ck-color-dropdown-border, #c4c4c4);
+          border-radius: 6px;
+          padding: 4px 8px;
+          font-size: 1em;
+          font-weight: 500;
+          color: var(--ck-color-text);
+          box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+          opacity: 0;
+          visibility: hidden;
+          transition: all 0.1s cubic-bezier(0.64, 0.57, 0.67, 1.53);
+          white-space: nowrap;
+          z-index: 999;
+          pointer-events: none;
+        }
+
+        .ck-slider-tooltip.visible {
+          opacity: 1;
+          visibility: visible;
+        }
+
+        .ck-slider-tooltip::after {
+          content: "";
+          position: absolute;
+          top: 100%;
+          left: 50%;
+          transform: translateX(-50%);
+          border: 5px solid transparent;
+          border-top-color: var(--ck-color-dropdown-background, #fff);
+        }
+
+        /* range slider input */
+        .ck-range-slider {
+          width: 100%;
+          height: 6px;
+          border-radius: 3px;
+          background: linear-gradient(to right,
+            var(--ck-color-focus-border, #005ccc) 0%,
+            var(--ck-color-focus-border, #005ccc) var(--slider-progress, 50%),
+            var(--ck-color-base-border, #c4c4c4) var(--slider-progress, 50%),
+            var(--ck-color-base-border, #c4c4c4) 100%);
+          outline: none;
+          appearance: none;
+          -webkit-appearance: none;
+          cursor: pointer;
+          transition: all 0.1s ease-in;
+        }
+
+        .ck-range-slider::-moz-range-progress {
+          background-color: var(--ck-color-focus-border, #005ccc);
+          height: 100%;
+          border-radius: 2em;
+        }
+
+        .ck-range-slider::-webkit-slider-thumb {
+          appearance: none;
+          -webkit-appearance: none;
+          width: 18px;
+          height: 18px;
+          border-radius: 50%;
+          background: #fff;
+          border: 2px solid var(--ck-color-focus-border, #005ccc);
+          cursor: pointer;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+          transition: all 0.2s ease-in;
+        }
+
+        .ck-range-slider::-moz-range-thumb {
+          width: 14px;
+          height: 14px;
+          border-radius: 50%;
+          background: #fff;
+          border: 2px solid var(--ck-color-focus-border, #005ccc);
+          cursor: pointer;
+          box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+          transition: all 0.2s ease-in;
+        }
+
+        .ck-range-slider::-webkit-slider-thumb:hover {
+          transform: scale(1.1);
+          box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        }
+        .ck-range-slider::-moz-range-thumb:hover {
+          transform: scale(1.1);
+          box-shadow: 0 3px 6px rgba(0, 0, 0, 0.3);
+        }
+
+        .ck-range-slider:focus::-webkit-slider-thumb {
+          box-shadow: 0 0 0 3px rgba(0, 92, 204, 0.2), 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+        .ck-range-slider:focus::-moz-range-thumb  {
+          box-shadow: 0 0 0 3px rgba(0, 92, 204, 0.2), 0 2px 4px rgba(0, 0, 0, 0.2);
+        }
+
+        /* Firefox track */
+        .ck-range-slider::-moz-range-track {
+          height: 6px;
+          border-radius: 3px;
+          background: var(--ck-color-base-border, #c4c4c4);
+        }
+
+        /* labels */
+        .ck-slider-labels {
+          display: flex;
+          justify-content: space-between;
+          margin-top: 0.5em;
+          font-size: 0.75em;
+          color: var(--ck-color-text);
+          user-select: none;
+        }
+
+        .ck-slider-labels span {
+          cursor: pointer;
+          padding: 2px 4px;
+          border-radius: 3px;
+          transition: background-color 0.15s ease;
+        }
+
+        .ck-slider-labels span:hover {
+          background-color: var(--ck-color-button-default-hover-background, #f0f0f0);
         }
 
         /*
