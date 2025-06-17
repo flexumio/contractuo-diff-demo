@@ -266,6 +266,16 @@
       .ck-content ol li, ul li {
         padding-left: 0.4em;
       }
+      .ck-content .differ-inline-upd {
+        position: relative;
+        display: inline-block;
+        padding: 0.05em 0.25em;
+        margin: -0.05em 0;
+        text-decoration: none;
+        background: var(--upd-bg-color);
+        border-radius: var(--del-ins-border-radius);
+        z-index: 0;
+      }
       .ck-content .differ-block-del,
       .ck-content .differ-block-ins,
       .ck-content .differ-block-upd,
@@ -288,6 +298,7 @@
         bottom: 0;
         box-decoration-break: clone;
         z-index: -2;
+        /* opacity: 0.5; */
       }
       .ck-content .differ-block-del::before {
         background-color: var(--del-bg-color);
@@ -371,7 +382,7 @@
         font-weight: 600;
       }
     </style>
-    <script type="module" crossorigin src="/contractuo-diff-demo/assets/index-CvUQ4p9l.js"></script>
+    <script type="module" crossorigin src="/contractuo-diff-demo/assets/index-yiiA5k2O.js"></script>
     <link rel="modulepreload" crossorigin href="/contractuo-diff-demo/assets/vendor-yGB__Fj_.js">
     <link rel="stylesheet" crossorigin href="/contractuo-diff-demo/assets/vendor-C2zQzrlW.css">
   </head>
