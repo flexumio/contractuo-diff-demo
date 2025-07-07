@@ -18,21 +18,28 @@
         --ins-bg-color: hsl(165, 68%, 78%);
         --upd-bg-color: hsl(195, 70%, 88%);
         --del-ins-border-radius: 4.5px;
-        --del-ins-transform: skewX(-8deg);
       }
-      html {
+      body, html {
+	      padding: 0;
+	      margin: 0;
+      }
+      body {
+        display: flex;
+        flex-direction: column;
+        height: 100%;
+        font-family: "IBM Plex Sans", sans-serif;
+        font-optical-sizing: auto;
+        font-style: normal;
+        outline: none;
+      }
+      body * {
         box-sizing: border-box;
       }
       *, *:before, *:after {
         box-sizing: inherit;
       }
-      body {
-        display: flex;
-        flex-direction: column;
-        font-family: "IBM Plex Sans", sans-serif;
-        font-optical-sizing: auto;
-        font-style: normal;
-        outline: none;
+      a {
+	      color: #38A5EE;
       }
       #root {
         display: none; /* initially hidden. Activate later */
@@ -198,6 +205,49 @@
       #sidebar input[type="checkbox"]:checked + .toggle-button svg {
         stroke-width: 2.5;
       }
+      #document-selector {
+        max-width: 500px;
+        margin: 0 auto 8px;
+        border-radius: 5px;
+        border: 1px solid #e1e7ee;
+      }
+      #document-selector .ck-dropdown,
+      #document-selector .ck-dropdown__button,
+      #document-selector .ck-button__label,
+      #document-selector .ck-dropdown__panel {
+        font-family: var(--ck-sample-font-family);
+        font-style: italic;
+        width: 100%;
+      }
+      #document-selector .ck-list-item-button {
+        align-items: flex-start;
+        text-align: left;
+      }
+      #document-selector .ck-list {
+        font-size: 0.85rem;
+        padding: 0;
+      }
+      #document-selector .ck-list__group,
+      #document-selector .ck-list__item {
+        padding-left: 0;
+      }
+      #document-selector .ck-list__group .ck-label {
+        background: #f0f6ff;
+        padding-top: 8px;
+        padding-bottom: 8px;
+      }
+      #document-selector .ck-dropdown__button {
+        border: none;
+        cursor: pointer;
+      }
+      #document-selector .ck-button__label {
+        padding: 4px;
+        cursor: pointer;
+      }
+      /* #document-selector .ck-button__label {
+        display: flex;
+        justify-content: flex-start;
+      } */
       .icon-off {
         display: block;
       }
@@ -210,21 +260,33 @@
       #sidebar input[type="checkbox"]:checked + .toggle-button .icon-on {
         display: block;
       }
+      .ck-content {
+        font-family: var(--ck-sample-font-family);
+        word-break: break-word;
+        white-space: normal;
+      }
       /* style delete and insert tags for diff view */
       .ck-content del,
       .ck-content ins {
         position: relative;
-        display: inline-block;
+        display: inline;
         padding: 0.05em 0.25em;
         margin: -0.05em 0;
-        text-decoration: none;
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
+        border-radius: var(--del-ins-border-radius);
+        text-decoration-line: none;
+        word-wrap: break-word;
+        white-space: normal;
         z-index: 0;
       }
       .ck-content del {
         color: var(--del-fg-color);
+        background: var(--del-bg-color);
       }
       .ck-content ins {
         color: var(--ins-fg-color);
+        background: var(--ins-bg-color);
       }
       .ck-content del::before,
       .ck-content ins::before {
@@ -232,20 +294,12 @@
         position: absolute;
         inset: 0;
         z-index: -1;
-        transform: var(--del-ins-transform);
         border-radius: var(--del-ins-border-radius);
+        box-decoration-break: clone;
+        -webkit-box-decoration-break: clone;
+        word-wrap: break-word;
+        white-space: normal;
       }
-      /* #orig-view {
-        background-color: #8be0ff;
-      }
-
-      #modif-view {
-        background-color: #8bffb9;
-      }
-
-      #diff-view {
-        background-color: #f0ff8b;
-      } */
       .ck-content del::before {
         background: var(--del-bg-color);
       }
@@ -268,10 +322,12 @@
       }
       .ck-content .differ-inline-upd {
         position: relative;
-        display: inline-block;
+        display: inline;
         padding: 0.05em 0.25em;
         margin: -0.05em 0;
+        inset: 0;
         text-decoration: none;
+        color: var(--ck-color-text);
         background: var(--upd-bg-color);
         border-radius: var(--del-ins-border-radius);
         z-index: 0;
@@ -364,6 +420,20 @@
           #fff 25%
         );
       }
+      /* avoid covering numeric markers */
+      .ck-content .differ-block-ins > p.differ-block-ins::before,
+      .ck-content .differ-block-del > p.differ-block-del::before,
+      .ck-content .differ-block-upd > p.differ-block-upd::before,
+      .ck-content .differ-block-mov > p.differ-block-mov::before {
+        background-color: transparent;
+      }
+      .ck-content ol > li > :is(p, h1, h2, h3, h4, h5, h6).differ-block-ins::before,
+      .ck-content ol > li > :is(p, h1, h2, h3, h4, h5, h6).differ-block-del::before,
+      .ck-content ol > li > :is(p, h1, h2, h3, h4, h5, h6).differ-block-upd::before,
+      .ck-content ol > li > :is(p, h1, h2, h3, h4, h5, h6).differ-block-mov::before {
+        /* background-color: transparent; */
+        opacity: 0.5;
+      }
       /* adjust styles of ordered list markers for h1-h4 headers */
       .ck-content li:has(> h1)::marker {
         font-size:   2em;
@@ -382,15 +452,17 @@
         font-weight: 600;
       }
     </style>
-    <script type="module" crossorigin src="/contractuo-diff-demo/assets/index-yiiA5k2O.js"></script>
-    <link rel="modulepreload" crossorigin href="/contractuo-diff-demo/assets/vendor-yGB__Fj_.js">
-    <link rel="stylesheet" crossorigin href="/contractuo-diff-demo/assets/vendor-C2zQzrlW.css">
+    <script type="module" crossorigin src="/contractuo-diff-demo/assets/index-BV230UOO.js"></script>
+    <link rel="modulepreload" crossorigin href="/contractuo-diff-demo/assets/vendor-BdYfDQCS.js">
+    <link rel="stylesheet" crossorigin href="/contractuo-diff-demo/assets/vendor-l_59xbhZ.css">
   </head>
 
   <body>
     <span id="root">
       <!-- Title DocDiffer + Demo -->
       <h1 id="main-title">DocDiffer<sup>Demo</sup></h1>
+      <!-- Document Source Selector -->
+      <div id="document-selector"></div>
       <!-- Toolbar -->
       <div id="toolbar"></div>
       <!-- Left & Right Views -->
@@ -499,6 +571,11 @@
         --ck-border-radius: 0px;
         --ck-focus-outer-shadow: none;
         --ck-color-focus-outer-shadow: #000;
+
+        --highlight-suggestion-ins-inactive: #89ecbc;
+        --highlight-suggestion-ins-active:   #007a4d;
+        --highlight-suggestion-del-active:   #d31510;
+        --highlight-suggestion-del-inactive: #ffcdc3;
 
         .ck-toolbar {
           min-height: 52px;
@@ -619,6 +696,14 @@
           border-top-color: var(--ck-color-dropdown-background, #fff);
         }
 
+        /* number range input */
+        .ck-input-number-range-container {
+          width: 100%;
+          justify-content: space-between;
+          font-size: 0.95em;
+          color: var(--ck-color-text);
+        }
+
         /* range slider input */
         .ck-range-slider {
           width: 100%;
@@ -708,6 +793,50 @@
 
         .ck-slider-labels span:hover {
           background-color: var(--ck-color-button-default-hover-background, #f0f0f0);
+        }
+
+        .ck-content .ck-suggestion-marker.ck-suggestion-marker-deletion {
+          background: none;
+          color: var(--highlight-suggestion-del-active);
+          text-decoration-color: var(--highlight-suggestion-del-active);
+          text-decoration-thickness: 2px;
+          text-decoration: line-through;
+          border: none;
+        }
+
+        .ck-content .ck-suggestion-marker.ck-suggestion-marker-insertion {
+          background: none;
+          color: var(--highlight-suggestion-ins-active);
+          text-decoration: var(--highlight-suggestion-ins-active);
+          text-decoration-thickness: 2px;
+          text-decoration: underline;
+          border: none;
+        }
+
+        .ck-content .ck-suggestion-marker.ck-suggestion-marker-deletion.ck-suggestion-marker--active {
+          border: none;
+          background: var(--highlight-suggestion-del-inactive);
+        }
+
+        .ck-content .ck-suggestion-marker.ck-suggestion-marker-insertion.ck-suggestion-marker--active {
+          border: none;
+          background: var(--highlight-suggestion-ins-inactive);
+        }
+
+        .ck-content .ck-suggestion-marker-split::after {
+          content: '';
+          background: none;
+          border: none;
+          color: var(--highlight-suggestion-ins-active);
+          text-decoration: underline;
+        }
+
+        .ck-content .ck-suggestion-marker-merge::after {
+          content: '';
+          background: none;
+          border: none;
+          color: var(--highlight-suggestion-del-active);
+          text-decoration: line-through;
         }
 
         /*
