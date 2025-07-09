@@ -126,4 +126,24 @@ const i=`<section>
         <li>First item</li>
         <p>Last item to be converted</p>
     </ul>
+
+    <h3>Case L-0017: Moving item within list</h3>
+    <ol>
+        <li>First item</li>
+        <li>Fourth item</li>
+        <li>Second item</li>
+        <li>Third item</li>
+    </ol>
+
+    <h3>Case L-0018: Split list</h3>
+    <ol>
+        <li>First item</li>
+        <li>Second item</li>
+    </ol>
+  <p><br/></p>
+    <ol>
+        <li>Third item</li>
+        <li>Fourth item</li>
+        <li>Fifth item</li>
+    </ol>
 </section>`;export{i as default};
